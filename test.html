@@ -1,0 +1,217 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+    <link rel="stylesheet" href="file:///C:/Users/Cristopher/Desktop/template/font-awesome-4.7.0/css/font-awesome.css">
+    <title>Hello, world!</title>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM"
+        crossorigin="anonymous"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.8.2/angular.min.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.8.0/chart.min.js"></script>
+    <style>
+        .btn-100 {
+            width: 100%
+        }
+
+        .bt-8 {
+            margin-bottom: 8px;
+        }
+
+        .select {
+            width: 100%
+        }
+
+        .validate {
+            color: red;
+        }
+    </style>
+</head>
+
+<body ng-app="App" ng-controller="musicaController">
+    <div class="container">
+        <div class="form-control">
+            <div id="inicio" class="row">
+                <div class="col-lg-12">
+                    <div class="col-lg-12">
+                        <button class="btn btn-secondary btn-100 bt-8" ng-click="ingresar_encuesta();">Encuenta</button>
+
+                    </div>
+                    <div class="col-lg-12">
+                        <button class="btn btn-secondary btn-100 bt-8" ng-click="ver_resultados()">Resultado</button>
+                    </div>
+                </div>
+            </div>
+            <div id="encuenta" class="row" style="display:none;">
+                <div class="col-lg-3">
+                    <a href="#" ng-click="volver();">
+                        <i class="fa fa-arrow-left" style="color:black;" aria-hidden="true"></i>
+                    </a>
+                </div>
+                <div class="col-lg-9"></div>
+                <div class="col-lg-3"></div>
+                <div class="col-lg-6">
+                    <div class="row">
+                        <div class="col-lg-12">
+                            <div class="col-auto">
+                                <label for="" class="col-form-label">Estilo de musical:</label>
+                            </div>
+                            <div class="col-lg-12">
+                                <div class="col-auto">
+                                    <select id="tipo_musica" ng-model="musica" class="form-select">
+                                        <option ng-repeat="music in list_music" value="{{music.id_tipo_musica}}">
+                                            {{music.detalle_tipo_musica}}</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-3"></div>
+                <div class="col-lg-3"></div>
+                <div class="col-lg-6 bt-8">
+                    <div class="row">
+                        <div class="col-lg-12">
+                            <div class="col-auto">
+                                <label for="" class="col-form-label">Email:</label>
+                            </div>
+                            <div class="col-auto">
+                                <form name="personForm" novalidate ng-submit="personForm.$valid && sendForm()">
+                                    <input type="email" class="form-control" name="email" ng-model="email"
+                                        ng-pattern="/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/" required>
+                                    <span style="color:Red"
+                                        ng-show="personForm.email.$dirty&&personForm.email.$error.pattern">Ingrese un
+                                        correo
+                                        valido.</span>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-3"></div>
+                <div class="col-lg-4"></div>
+                <div class="col-lg-4">
+                    <div class="row">
+                        <button class="btn btn-success" ng-click="guardar_registros()"> Guardad </button>
+                    </div>
+                </div>
+                <div class="col-lg-4"></div>
+            </div>
+            <div id="resultado" class="row" style="display:none;">
+                <div class="col-lg-3">
+                    <a href="#" ng-click="volver();">
+                        <i class="fa fa-arrow-left" style="color:black;" aria-hidden="true"></i>
+                    </a>
+                </div>
+                <div class="col-lg-9"></div>
+                <div class="col-lg-12">
+                    <canvas id="grafica"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+        var app = angular.module('App', []);
+        app.controller("musicaController", function ($scope, $http) {
+            $scope.sendForm = function () {
+                $scope.msg = "Form Validated";
+            };
+            //$scope.listar_tipo_musica = function () {
+            $http({ method: 'GET', url: 'http://localhost:8080/api/test/WS_listar_tipo_musica' })
+                .then(function (data) {
+                    $scope.list_music = data.data.json;
+                })
+                .catch(function (error) {
+                    alert("No es posible carga la informacion en estos momentos.");
+                })
+            //}
+
+            function clear_data() {
+                $scope.musica = '';
+                $scope.email = '';
+                $scope.volver();
+            }
+
+            $scope.guardar_registros = function () {
+                var validRegex = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*$/;
+                if ($scope.email != undefined && $scope.email != '' && $scope.email.match(validRegex)) {
+                    var json = {};
+                    json.tipo_musica = {};
+                    json.tipo_musica.id_tipo_musica = $scope.musica;
+                    json.email = $scope.email;
+                    $http({ method: 'POST', data: json, url: 'http://localhost:8080/api/test/WS_insert_data' })
+                        .then(function (data) {
+                            clear_data();
+                        })
+                        .catch(function (error) {
+                            alert("No es posible carga la informacion en estos momentos.");
+                        })
+                }
+            }
+
+            $scope.volver = function () {
+                document.getElementById("inicio").style.display = ''
+                document.getElementById("encuenta").style.display = 'none'
+                document.getElementById("resultado").style.display = 'none'
+            }
+
+            $scope.ingresar_encuesta = function () {
+                document.getElementById("inicio").style.display = 'none'
+                document.getElementById("encuenta").style.display = ''
+            }
+
+            $scope.ver_resultados = function () {
+                document.getElementById("inicio").style.display = 'none'
+                document.getElementById("resultado").style.display = ''
+                var arr = [];
+                var arr_data = [];
+                $http({ method: 'GET', url: 'http://localhost:8080/api/test/WS_listar_registros' })
+                    .then(function (data) {
+                        for (var i in $scope.list_music) {
+                            var flag = false;
+                            arr.push($scope.list_music[i].detalle_tipo_musica);
+                            for (var x in data.data.json) {
+                                if ((x * 1) == $scope.list_music[i].id_tipo_musica) {
+                                    arr_data.push(data.data.json[x] * 1);
+                                    flag = true;
+                                    break
+                                }
+                            }
+                            if (flag == false) {
+                                arr_data.push(0);
+                            }
+                        }
+                        const graph = document.querySelector("#grafica");
+                        let chartStatus = Chart.getChart("grafica"); // <canvas> id
+                        if (chartStatus != undefined) {
+                            chartStatus.destroy();
+                        }
+                        const graf = {
+                            labels: arr,
+                            datasets: [{
+                                label: "Cantidad por tipo",
+                                data: arr_data,
+                                backgroundColor: 'rgba(9, 129, 176, 0.2)'
+                            }]
+                        };
+                        const config = {
+                            type: 'bar',
+                            data: graf,
+                        };
+                        new Chart(graph, config);
+                    })
+                    .catch(function (error) {
+                        alert("No es posible carga la informacion en estos momentos.");
+                    });
+
+            }
+        });
+
+    </script>
+</body>
+
+</html>
